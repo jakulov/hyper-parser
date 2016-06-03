@@ -1,0 +1,35 @@
+{
+    "name": "jakulov/hyper-parser",
+    "description": "Parser any web content",
+    "version": "0.1.0-dev",
+    "type": "library",
+    "keywords": ["Parser", "DOM", "HTML", "Content", "HTTP"],
+    "homepage": "http://hyper.jakulov.ru",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Yakov Akulov",
+            "email": "jakulov@gmail.com",
+            "homepage": "http://jakulov.ru",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "email": "jakulov@gmail.com",
+        "issues": "http://github.com/jakulov/hyper-parser/issues",
+        "source": "http://github.com/jakulov/hyper-parser"
+    },
+    "require": {
+        "php" : "^5.5 || ^7.0",
+        "sunra/php-simple-html-dom-parser": "^1.5",
+        "guzzlehttp/guzzle": "^6.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "jakulov\\HyperParser": "src/jakulov/HyperParser"
+        }
+    }
+}
