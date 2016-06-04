@@ -7,7 +7,10 @@
  */
 namespace jakulov\HyperParser;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use jakulov\HyperParser\Bridge\SunraDOMParserBridge;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * @link https://github.com/jakulov/hyper-parser
@@ -22,26 +25,48 @@ class Parser
         'innertext',
         'outertext',
     ];
-
+    /** @var array */
+    public $httpOptions = [];
+    /** @var bool */
+    public $ignoreHttpStatusCode = false; // parse content even if response status code != 200
+    /** @var string */
+    public $useDOMParser = 'sunra';
+    /** @var array */
+    protected $DOMParserClasses = [
+        'sunra' => SunraDOMParserBridge::class,
+    ];
     /** @var DOMParserInterface */
     protected $DOMParser;
+    /** @var ClientInterface */
+    protected $httpClient;
 
     /**
      * Parser constructor.
      * @param DOMParserInterface $DOMParser
+     * @param array $httpOptions
      */
-    public function __construct(DOMParserInterface $DOMParser = null)
+    public function __construct(DOMParserInterface $DOMParser = null, array $httpOptions = [])
     {
         $this->DOMParser = $DOMParser;
+        $this->httpOptions = $httpOptions;
     }
 
-    public function parserUrl($url, array $pattern)
+    /**
+     * @param $url
+     * @param array $pattern
+     * @return array
+     * @throws HyperParserException
+     */
+    public function parseUrl($url, array $pattern)
     {
-        $data = [];
+        $response = $this->fetchUrl($url);
+        if($this->isResponseCanBeParsed($response)) {
+            return $this->extractDataByPattern($response->getBody()->getContents(), $pattern);
+        }
 
-        // TODO: implement parse
-
-        return $data;
+        throw new HyperParserException(
+            'Refused to parse response with status code = '. $response->getStatusCode() .'. url='. $url
+        );
     }
 
     public function bulkParse(array $urls, array $pattern)
@@ -51,6 +76,17 @@ class Parser
         // TODO: implement bulk
 
         return $data;
+    }
+
+    /**
+     * @param string $url
+     * @param string $method
+     * @param array $options
+     * @return \Psr\Http\Message\ResponseInterface
+     */
+    public function fetchUrl($url, $method = 'GET', array $options = [])
+    {
+        return $this->getHttpClient()->request($method, $url, $options);
     }
 
     /**
@@ -88,11 +124,18 @@ class Parser
 
     /**
      * @return DOMParserInterface
+     * @throws HyperParserException
      */
     public function getDOMParser()
     {
         if($this->DOMParser === null) {
-            $this->DOMParser = new SunraDOMParserBridge();
+            $domParserClass = isset($this->DOMParserClasses[$this->useDOMParser]) ?
+                $this->DOMParserClasses[$this->useDOMParser] : null;
+            if($domParserClass === null) {
+                throw new HyperParserException('Unknown DOM Parser alias: '. $this->useDOMParser);
+            }
+
+            $this->DOMParser = new $domParserClass;
         }
 
         return $this->DOMParser;
@@ -107,6 +150,61 @@ class Parser
         $this->DOMParser = $DOMParser;
 
         return $this;
+    }
+
+    /**
+     * @return ClientInterface
+     */
+    public function getHttpClient()
+    {
+        if($this->httpClient === null) {
+            $this->httpClient = new Client($this->httpOptions);
+        }
+
+        return $this->httpClient;
+    }
+
+    /**
+     * @param ClientInterface $httpClient
+     * @return $this
+     */
+    public function setHttpClient(ClientInterface $httpClient)
+    {
+        $this->httpClient = $httpClient;
+
+        return $this;
+    }
+
+    /**
+     * @param string $useDOMParser
+     * @return $this
+     */
+    public function setUseDOMParser($useDOMParser)
+    {
+        $this->useDOMParser = $useDOMParser;
+
+        return $this;
+    }
+
+    /**
+     * @param $alias
+     * @param $class
+     * @return $this
+     */
+    public function addDOMParserClass($alias, $class)
+    {
+        $this->DOMParserClasses[$alias] = $class;
+
+        return $this;
+    }
+
+    /**
+     * @param ResponseInterface $response
+     * @return bool
+     */
+    protected function isResponseCanBeParsed(ResponseInterface $response)
+    {
+        return $response->getStatusCode() === 200 || $this->ignoreHttpStatusCode;
     }
 
 
