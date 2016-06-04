@@ -10,7 +10,7 @@
 /**
  * Class SteamMock
  */
-class SteamMock implements \Psr\Http\Message\StreamInterface
+class StreamMock implements \Psr\Http\Message\StreamInterface
 {
     public function __toString()
     {

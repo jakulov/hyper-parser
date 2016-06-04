@@ -94,11 +94,11 @@ class HttpResponseMock implements \Psr\Http\Message\ResponseInterface
     }
 
     /**
-     * @return SteamMock
+     * @return StreamMock
      */
     public function getBody()
     {
-        return new SteamMock();
+        return new StreamMock();
     }
 
     /**
