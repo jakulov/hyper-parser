@@ -13,4 +13,4 @@ require __DIR__ .'/Mock/DOMParserMock.php';
 require __DIR__ .'/Mock/HttpClientMock.php';
 require __DIR__ .'/Mock/HttpResponseMock.php';
 require __DIR__ .'/Mock/PromiseMock.php';
-require __DIR__ .'/Mock/SteamMock.php';
+require __DIR__ .'/Mock/StreamMock.php';

@@ -202,7 +202,7 @@ class Parser
      * @param ResponseInterface $response
      * @return bool
      */
-    protected function isResponseCanBeParsed(ResponseInterface $response)
+    public function isResponseCanBeParsed(ResponseInterface $response)
     {
         return $response->getStatusCode() === 200 || $this->ignoreHttpStatusCode;
     }
