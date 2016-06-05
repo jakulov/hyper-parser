@@ -150,6 +150,40 @@ class ParserTest extends PHPUnit_Framework_TestCase
 
     public function testExtractDataByPattern()
     {
-        // TODO: write test extract
+        $content = 'test';
+        $selector = 'selector';
+        $filter1 = 'text';
+        $filter2 = 'innertext';
+        $data1 = 'test1';
+        $data2 = 'test2';
+
+        $elementMock = $this->getMockBuilder(DOMMock::class)->setMethods(['text', 'innertext'])->getMock();
+        $elementMock->expects($this->at(0))->method($filter1)->will($this->returnValue($data1));
+        $elementMock->expects($this->at(1))->method($filter2)->will($this->returnValue($data2));
+
+        $domMock = $this->getMockBuilder(DOMMock::class)->setMethods(['find'])->getMock();
+        $domMock
+            ->expects($this->exactly(2))
+            ->method('find')
+            ->with($this->equalTo($selector))
+            ->will($this->returnValue([$elementMock]));
+
+        $domParserMock = $this->getMockBuilder(DOMParserMock::class)->setMethods(['getDOM'])->getMock();
+        $domParserMock
+            ->expects($this->once())
+            ->method('getDOM')
+            ->with($this->equalTo($content))
+            ->will($this->returnValue($domMock));
+
+        $parser = new \jakulov\HyperParser\Parser($domParserMock);
+
+        $data = $parser->extractDataByPattern($content, [
+            'data1' => $selector,
+            'data2' => $selector .'|' . $filter2,
+        ]);
+
+        $expects = ['data1' => [$data1], 'data2' => [$data2]];
+
+        $this->assertEquals($expects, $data);
     }
 }
