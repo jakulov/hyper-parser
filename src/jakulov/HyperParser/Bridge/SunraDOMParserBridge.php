@@ -10,6 +10,7 @@ namespace jakulov\HyperParser\Bridge;
 
 use jakulov\HyperParser\DOMInterface;
 use jakulov\HyperParser\DOMParserInterface;
+use Sunra\PhpSimple\HtmlDomParser;
 
 /**
  * Class SunraDOMParserBridge
@@ -23,6 +24,7 @@ class SunraDOMParserBridge implements DOMParserInterface
      */
     public function getDOM($string)
     {
-        return \simplehtmldom_1_5\str_get_html($string);
+        return HtmlDomParser::str_get_html($string);
+//        return \simplehtmldom_1_5\str_get_html($string);
     }
 }

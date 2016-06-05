@@ -156,14 +156,16 @@ class ParserTest extends PHPUnit_Framework_TestCase
         $filter2 = 'innertext';
         $data1 = 'test1';
         $data2 = 'test2';
+        $data3 = 'test3';
 
-        $elementMock = $this->getMockBuilder(DOMMock::class)->setMethods(['text', 'innertext'])->getMock();
+        $elementMock = $this->getMockBuilder(DOMMock::class)->setMethods(['text', 'innertext', 'getAttribute'])->getMock();
         $elementMock->expects($this->at(0))->method($filter1)->will($this->returnValue($data1));
         $elementMock->expects($this->at(1))->method($filter2)->will($this->returnValue($data2));
+        $elementMock->expects($this->at(2))->method('getAttribute')->will($this->returnValue($data3));
 
         $domMock = $this->getMockBuilder(DOMMock::class)->setMethods(['find'])->getMock();
         $domMock
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('find')
             ->with($this->equalTo($selector))
             ->will($this->returnValue([$elementMock]));
@@ -180,9 +182,10 @@ class ParserTest extends PHPUnit_Framework_TestCase
         $data = $parser->extractDataByPattern($content, [
             'data1' => $selector,
             'data2' => $selector .'|' . $filter2,
+            'data3' => $selector .'|src',
         ]);
 
-        $expects = ['data1' => [$data1], 'data2' => [$data2]];
+        $expects = ['data1' => [$data1], 'data2' => [$data2], 'data3' => [$data3]];
 
         $this->assertEquals($expects, $data);
     }
