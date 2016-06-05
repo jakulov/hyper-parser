@@ -20,8 +20,8 @@ $pattern = [
 
 $data = $parser->parseUrl($url, $pattern);
 
-echo 'Name: '. array_shift($data['name']) . PHP_EOL;
-echo 'Photo: '. array_shift($data['img']) . PHP_EOL . PHP_EOL;
-echo 'Bio: '. strip_tags(array_shift($data['bio'])) . PHP_EOL . PHP_EOL;
+echo 'Name: '. ($data['name'][0]) . PHP_EOL;
+echo 'Photo: '. ($data['img'][0]) . PHP_EOL . PHP_EOL;
+echo 'Bio: '. strip_tags($data['bio'][0]) . PHP_EOL . PHP_EOL;
 echo '===================== '. PHP_EOL;
 echo 'Tags: '. join(', ', array_slice($data['tags'], 1)) . PHP_EOL . PHP_EOL;

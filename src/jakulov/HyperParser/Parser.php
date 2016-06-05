@@ -97,29 +97,55 @@ class Parser
     public function extractDataByPattern($content, array $pattern)
     {
         $data = [];
-
-        // TODO: tree filters
-
         $dom = $this->getDOMParser()->getDOM($content);
         foreach($pattern as $field => $query) {
-            $filter = 'text';
-            $selector = $query;
-            if(stripos($query, '|') !== false) {
-                list($selector, $filter) = explode('|', $query);
+            if(is_array($query)) {
+                $data[$field] = [];
+                $elements = $dom->find($query['selector']);
+                foreach($elements as $element) {
+                    $item = [];
+                    foreach($query['fields'] as $itemField => $fieldQuery) {
+                        $item[$itemField] = $this->parseFieldFromDOM($element, $fieldQuery);
+                    }
+
+                    $data[$field][] = $item;
+                }
             }
-            $data[$field] = [];
-            $elements = $dom->find($selector);
-            foreach($elements as $element) {
-                if(in_array($filter, $this->allowFilters)) {
-                    $data[$field][] = call_user_func_array([$element, $filter], []);
-                }
-                else {
-                    $data[$field][] = call_user_func_array([$element, 'getAttribute'], [$filter]);
-                }
+            else {
+                $data[$field] = $this->parseFieldFromDOM($dom, $query);
             }
         }
 
         return $data;
+    }
+
+    /**
+     * @param DOMInterface $dom
+     * @param $query
+     * @return array
+     */
+    protected function parseFieldFromDOM($dom, $query)
+    {
+        $filter = 'text';
+        $selector = $query;
+        if(stripos($query, '|') !== false) {
+            list($selector, $filter) = explode('|', $query);
+        }
+        $field = [];
+        $elements = $dom->find($selector);
+        foreach($elements as $element) {
+            if(in_array($filter, $this->allowFilters)) {
+                $field[] = call_user_func_array([$element, $filter], []);
+            }
+            else {
+                $field[] = call_user_func_array([$element, 'getAttribute'], [$filter]);
+            }
+        }
+        if(!$field) {
+            $field[] = null;
+        }
+
+        return $field;
     }
 
     /**

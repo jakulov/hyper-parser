@@ -189,4 +189,60 @@ class ParserTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals($expects, $data);
     }
+
+    public function testExtractDataByPatternWithArray()
+    {
+        $content = '';
+
+        $selector = '.item';
+        $fieldSelector = '.title';
+        $data1 = 'Test Title 1';
+        $data2 = 'Test Title 2';
+
+        $elementMock = $this->getMockBuilder(DOMMock::class)->setMethods(['text'])->getMock();
+        $elementMock->expects($this->at(0))->method('text')->will($this->returnValue($data1));
+        $elementMock->expects($this->at(1))->method('text')->will($this->returnValue($data2));
+
+        $itemMock = $this->getMockBuilder(DOMMock::class)->setMethods(['find'])->getMock();
+        $itemMock
+            ->expects($this->exactly(2))
+            ->method('find')
+            ->with($this->equalTo($fieldSelector))
+            ->will($this->returnValue([$elementMock]));
+
+        $domMock = $this->getMockBuilder(DOMMock::class)->setMethods(['find'])->getMock();
+        $domMock
+            ->expects($this->once())
+            ->method('find')
+            ->with($this->equalTo($selector))
+            ->will($this->returnValue([$itemMock, $itemMock]));
+
+        $domParserMock = $this->getMockBuilder(DOMParserMock::class)->setMethods(['getDOM'])->getMock();
+        $domParserMock
+            ->expects($this->once())
+            ->method('getDOM')
+            ->with($this->equalTo($content))
+            ->will($this->returnValue($domMock));
+
+        $pattern = [
+            'items' => [
+                'selector' => $selector,
+                'fields' => [
+                    'title' => $fieldSelector
+                ],
+            ],
+        ];
+
+        $expected = ['items' => [
+            ['title' => [$data1]],
+            ['title' => [$data2]],
+        ]];
+
+
+        $parser = new \jakulov\HyperParser\Parser($domParserMock);
+
+        $actual = $parser->extractDataByPattern($content, $pattern);
+
+        $this->assertEquals($expected, $actual);
+    }
 }
