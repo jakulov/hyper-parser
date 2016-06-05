@@ -245,4 +245,82 @@ class ParserTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals($expected, $actual);
     }
+
+    public function testBulkParse()
+    {
+        $parser = $this->getMockBuilder(\jakulov\HyperParser\Parser::class)
+            ->setMethods(['getHttpClient', 'isResponseCanBeParsed', 'extractDataByPattern'])
+            ->getMock();
+
+        $failOnError = true;
+        $url1 = 'http://localhost/1';
+        $url2 = 'http://localhost/2';
+        $urls = [
+            $url1,
+            $url2,
+        ];
+        $pattern = [
+            'title' => '.title'
+        ];
+
+        $data1 = 'Test Title 1';
+        $data2 = 'Test Title 2';
+
+        $content1 = 'Test content 1';
+        $content2 = 'Test content 2';
+
+        $streamMock = $this->getMockBuilder(StreamMock::class)->setMethods(['getContents'])->getMock();
+        $streamMock->expects($this->at(0))->method('getContents')->will($this->returnValue($content1));
+        $streamMock->expects($this->at(1))->method('getContents')->will($this->returnValue($content2));
+
+        $responseMock = $this->getMockBuilder(HttpResponseMock::class)->setMethods(['getBody'])->getMock();
+        $responseMock->expects($this->exactly(2))->method('getBody')->will($this->returnValue($streamMock));
+
+        $httpClientMock = $this->getMockBuilder(HttpClientMock::class)->setMethods(['requestAsync'])->getMock();
+        $httpClientMock
+            ->expects($this->at(0))
+            ->method('requestAsync')
+            ->with($this->equalTo('GET'), $this->equalTo($url1))
+            ->will($this->returnValue($responseMock));
+        $httpClientMock
+            ->expects($this->at(1))
+            ->method('requestAsync')
+            ->with($this->equalTo('GET'), $this->equalTo($url2))
+            ->will($this->returnValue($responseMock));
+
+        $parser
+            ->expects($this->exactly(2))
+            ->method('isResponseCanBeParsed')
+            ->with($this->equalTo($responseMock))
+            ->will($this->returnValue(true));
+
+        $parser
+            ->expects($this->at(2))
+            ->method('extractDataByPattern')
+            ->with($this->equalTo($content1), $this->equalTo($pattern))
+            ->will($this->returnValue(['title' => [$data1]]));
+        $parser
+            ->expects($this->at(4))
+            ->method('extractDataByPattern')
+            ->with($this->equalTo($content2), $this->equalTo($pattern))
+            ->will($this->returnValue(['title' => [$data2]]));
+
+
+        $parser->expects($this->once())->method('getHttpClient')->will($this->returnValue($httpClientMock));
+
+        if($parser instanceof \jakulov\HyperParser\Parser) {
+            $expected = [
+                $url1 => [
+                    'title' => [$data1],
+                ],
+                $url2 => [
+                    'title' => [$data2],
+                ],
+            ];
+
+            $actual = $parser->bulkParse($urls, $pattern, $failOnError);
+
+            $this->assertEquals($expected, $actual);
+        }
+    }
 }

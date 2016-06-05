@@ -8,6 +8,7 @@
 
 require __DIR__ .'/../vendor/autoload.php';
 
+require __DIR__ .'/Mock/HttpResponseTrait.php';
 require __DIR__ .'/Mock/DOMMock.php';
 require __DIR__ .'/Mock/DOMParserMock.php';
 require __DIR__ .'/Mock/HttpClientMock.php';

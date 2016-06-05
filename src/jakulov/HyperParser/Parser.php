@@ -9,6 +9,7 @@ namespace jakulov\HyperParser;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Pool;
 use jakulov\HyperParser\Bridge\SunraDOMParserBridge;
 use Psr\Http\Message\ResponseInterface;
 
@@ -69,13 +70,52 @@ class Parser
         );
     }
 
-    public function bulkParse(array $urls, array $pattern)
+    /**
+     * @param array $urls
+     * @param array $pattern
+     * @param bool $failOnError
+     * @return array
+     * @throws HyperParserException
+     */
+    public function bulkParse(array $urls, array $pattern, $failOnError = true)
     {
         $data = [];
+        $promises = [];
+        $httpClient = $this->getHttpClient();
+        foreach($urls as $url) {
+            $promises[$url] = $httpClient->requestAsync('GET', $url);
+        }
 
-        // TODO: implement bulk
+        $responses = \GuzzleHttp\Promise\settle($promises)->wait();
+        foreach($responses as $url => $response) {
+            $data[$url] = $this->parseResponse($response['value'], $pattern, $failOnError);
+        }
 
         return $data;
+    }
+
+    /**
+     * @param $response
+     * @param array $pattern
+     * @param bool $failOnError
+     * @return array|string
+     * @throws HyperParserException
+     */
+    protected function parseResponse($response, array $pattern = [], $failOnError = true)
+    {
+        if($response instanceof ResponseInterface && $this->isResponseCanBeParsed($response)) {
+            return $this->extractDataByPattern($response->getBody()->getContents(), $pattern);
+        }
+        else {
+            if($failOnError) {
+                throw new HyperParserException(
+                    $response instanceof \Exception ? $response->getMessage() : 'Cannot parse response',
+                    $response instanceof \Exception ? $response->getCode() : 0,
+                    $response instanceof \Exception ? $response : null
+                );
+            }
+            return $response instanceof \Exception ? $response->getMessage() : 'Cannot parse response';
+        }
     }
 
     /**

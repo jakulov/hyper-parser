@@ -20,9 +20,8 @@ class PromiseMock implements \Prophecy\Promise\PromiseInterface
      */
     public function execute(array $args, \Prophecy\Prophecy\ObjectProphecy $object, \Prophecy\Prophecy\MethodProphecy $method)
     {
-        // TODO: testing promise
-
-        return;
+        // TODO: test promise
     }
+
 
 }
