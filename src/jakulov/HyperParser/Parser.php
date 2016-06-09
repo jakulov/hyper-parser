@@ -9,7 +9,6 @@ namespace jakulov\HyperParser;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Pool;
 use jakulov\HyperParser\Bridge\SunraDOMParserBridge;
 use Psr\Http\Message\ResponseInterface;
 
